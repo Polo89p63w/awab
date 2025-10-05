@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Media Hub - Dark Mode</title>
+
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box; /* Professional reset */
+        }
+        
+        :root {
+            /* Professional Dark Colors: Deep Charcoal, Muted Slate [5] */
+            --color-bg-primary: #121217; 
+            --color-bg-secondary: #1e1e24; 
+            --color-text-light: #e0e0e8; 
+            --color-text-muted: #8c8c9a; 
+            --color-accent: #6f42c1; /* Desaturated Violet for calm professionalism */
+            --color-accent-hover: #8e65d2;
+            --color-border: #2c2c34;
+            --spacing-unit: 1rem;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--color-bg-primary);
+            color: var(--color-text-light);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+     .container {
+            width: 90%;
+            max-width: 1200px;
+            padding: var(--spacing-unit);
+            flex-grow: 1;
+        }
+
+        header {
+            width: 100%;
+            background-color: var(--color-bg-secondary);
+            border-bottom: 1px solid var(--color-border);
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            color: var(--color-accent);
+        }
+
+     .auth-controls button {
+            background-color: var(--color-accent);
+            color: var(--color-text-light);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s;
+        }
+
+     .auth-controls button:hover {
+            background-color: var(--color-accent-hover);
+            transform: translateY(-1px);
+        }
+        
+     .auth-controls button:active {
+            transform: translateY(0);
+        }
+
+     .content-area {
+            padding: calc(var(--spacing-unit) * 2) 0;
+        }
+
+     .video-player-container {
+            background-color: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            position: relative;
+        }
+
+        video {
+            width: 100%;
+            max-height: 70vh;
+            display: block;
+            background-color: #000;
+        }
+
+     .media-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: var(--spacing-unit);
+        }
+
+     .media-card {
+            background-color: var(--color-bg-secondary);
+            border-radius: 6px;
+            padding: var(--spacing-unit);
+            border: 1px solid var(--color-border);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            transition: border-color 0.3s ease;
+        }
+        
+     .media-card:hover {
+            border-color: var(--color-accent-hover);
+        }
+
+     .media-card h3 {
+            color: var(--color-text-light);
+            margin-top: 0;
+            font-size: 1.2rem;
+            border-bottom: 1px solid var(--color-border);
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+     .download-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+     .download-group button {
+            flex-grow: 1;
+            padding: 0.6rem 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--color-accent);
+            background-color: transparent;
+            color: var(--color-accent);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 600;
+        }
+        
+     .download-group button.primary {
+            background-color: var(--color-accent);
+            color: var(--color-text-light);
+        }
+        
+     .download-group button:disabled {
+            background-color: var(--color-bg-primary);
+            color: var(--color-text-muted);
+            border-color: var(--color-text-muted);
+            cursor: not-allowed;
+        }
+
+     .download-group button:hover:not(:disabled) {
+            opacity: 0.9;
+        }
+
+        /* Loading Spinner Enhancement */
+       .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-left-color: var(--color-accent-hover);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Initial Screen States */
+        #loading-screen, #login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--color-bg-primary);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        #login-screen button {
+            font-size: 1.1rem;
+            padding: 1rem 2rem;
+            margin-top: 2rem;
+        }
+        
+     .hidden {
+            display: none!important;
+        }
+    </style>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+</head>
+<body>
+
+    <div id="loading-screen">
+        <div class="spinner"></div>
+        <p>Initializing Media Hub...</p>
+    </div>
+
+    <div id="login-screen" class="hidden">
+        <h2>Secure Content Access</h2>
+        <p>This content is restricted. Please log in to view and download.</p>
+        <button onclick="handleSignIn()">Sign In with GitHub</button>
+    </div>
+
+    <main id="main-content" class="hidden">
+        <header>
+            <h1>Professional Media Stream</h1>
+            <div class="auth-controls">
+                <span id="user-display" style="margin-right: 1rem; color: var(--color-text-muted);"></span>
+                <button id="sign-out-btn" onclick="handleSignOut()" class="hidden">Sign Out</button>
+            </div>
+        </header>
+        
+        <div class="container content-area">
+            
+            <h2>Featured Video</h2>
+            <div class="video-player-container">
+                <video id="media-player" controls preload="metadata" poster="placeholder-thumbnail.jpg">
+                    <source src="" type="video/mp4"> 
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+            
+            <h2>Content Library</h2>
+            <div id="media-library" class="media-list">
+                </div>
+        </div>
+    </main>
+
+
+    <script>
+        // --- CRITICAL CONFIGURATION PLACEHOLDERS ---
+        // REPLACE THESE WITH YOUR ACTUAL VALUES
+        const FIREBASE_CONFIG = {
+            apiKey: "YOUR_FIREBASE_API_KEY",
+            authDomain: "YOUR_APP_ID.firebaseapp.com",
+            projectId: "YOUR-PROJECT-ID",
+            //... other config values
+        };
+        
+        // This is the required external API for secure media link fetching and transcoding
+        const TRANSCODE_API_ENDPOINT = 'https://your-serverless-api.com/transcode-audio';
+
+
+        // --- CORE APPLICATION VARIABLES ---
+        let auth;
+        
+        // MOCKUP MEDIA LIST: Simulates data fetched securely from the backend API
+        const SECURE_MEDIA_CATALOG =
+                secureUrl: 'https://media.githubusercontent.com/media/YOUR_REPO/main/media/intro_architecture.mp4'
+            },
+            { 
+                id: 'v2', 
+                title: 'Professional Dark Theme Design Principles', 
+                description: 'Module 2: Using CSS variables and prefers-color-scheme.[7]', 
+                secureUrl: 'https://media.githubusercontent.com/media/YOUR_REPO/main/media/design_principles.mp4'
+            },
+        ];
+
+
+        // --- FIREBASE INITIALIZATION ---
+        function initFirebase() {
+            if (typeof firebase!== 'undefined') {
+                firebase.initializeApp(FIREBASE_CONFIG);
+                auth = firebase.auth();
+                // Set up the authentication state observer [8]
+                auth.onAuthStateChanged(handleAuthStateChange);
+            } else {
+                console.error("Firebase SDK not loaded.");
+                document.getElementById('loading-screen').classList.add('hidden');
+                document.getElementById('login-screen').innerHTML = "<h2>Error</h2><p>Authentication service failed to load. Check console.</p>";
+                document.getElementById('login-screen').classList.remove('hidden');
+            }
+        }
+
+
+        // --- AUTHENTICATION HANDLERS ---
+        function handleSignIn() {
+            // Use GitHub as the OAuth provider [1]
+            const provider = new firebase.auth.GithubAuthProvider();
+            // Optional: Request permissions needed for profile data
+            provider.addScope('user:email'); 
+            
+            auth.signInWithPopup(provider)
+             .catch(error => {
+                    alert("Login Failed: " + error.message);
+                    console.error("Firebase Sign-In Error:", error);
+                });
+        }
+
+        function handleSignOut() {
+            auth.signOut();
+        }
+        
+        function handleAuthStateChange(user) {
+            document.getElementById('loading-screen').classList.add('hidden');
+            
+            if (user) {
+                // User is signed in.
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('main-content').classList.remove('hidden');
+                document.getElementById('sign-out-btn').classList.remove('hidden');
+                
+                const userName = user.displayName |
+
+| user.email.split('@');
+                document.getElementById('user-display').textContent = `Welcome, ${userName}!`; 
+
+                // Get the token to secure API calls [1]
+                user.getIdToken().then(loadContent); 
+            } else {
+                // User is signed out.
+                document.getElementById('main-content').classList.add('hidden');
+                document.getElementById('sign-out-btn').classList.add('hidden');
+                document.getElementById('login-screen').classList.remove('hidden');
+            }
+        }
+
+
+        // --- MEDIA CONTENT MANAGEMENT ---
+        
+        function loadContent(idToken) {
+            const libraryEl = document.getElementById('media-library');
+            libraryEl.innerHTML = ''; // Clear existing content
+            
+            if (SECURE_MEDIA_CATALOG.length > 0) {
+                // Set the featured video player (using the first item)
+                document.getElementById('media-player').src = SECURE_MEDIA_CATALOG.secureUrl; 
+                
+                // Populate the media library list
+                SECURE_MEDIA_CATALOG.forEach(media => {
+                    const card = document.createElement('div');
+                    card.className = 'media-card';
+                    card.innerHTML = `
+                        <h3>${media.title}</h3>
+                        <p class="text-muted">${media.description}</p>
+                        <div class="download-group">
+                            <button class="primary" onclick="downloadVideo('${media.secureUrl}', '${media.title}.mp4')">
+                                Download Video
+                            </button>
+                            <button id="btn-audio-${media.id}" onclick="requestAudioConversion(this, '${media.id}', '${media.title}.mp3')">
+                                Download Audio (Convert)
+                            </button>
+                        </div>
+                    `;
+                    libraryEl.appendChild(card);
+                });
+            } else {
+                libraryEl.innerHTML = '<p class="text-muted">No content available at this time. Please check back later.</p>';
+            }
+        }
+
+        // --- DOWNLOAD LOGIC ---
+
+        /**
+         * Handles secure client-side download using Blob URL technique.
+         * This method ensures the file download is user-initiated and memory-managed.[9]
+         */
+        function downloadVideo(url, filename) {
+            if (!auth.currentUser) return alert("You must be logged in to download.");
+
+            // In a professional setup, this fetch should go through a token-validated proxy.
+            alert(`Initiating secure download for: ${filename}.`);
+
+            fetch(url)
+             .then(response => {
+                  if (!response.ok) throw new Error('File fetch failed');
+                  return response.blob();
+              })
+             .then(blob => {
+                    const fileURL = URL.createObjectURL(blob); // Create temporary local URL
+                    
+                    const anchor = document.createElement('a');
+                    anchor.href = fileURL;
+                    anchor.download = filename; // Set the desired file name
+                    
+                    document.body.appendChild(anchor);
+                    
+                    // Simulate click event for reliable download trigger [10]
+                    const mouseEvent = new MouseEvent('click', { bubbles: true, cancelable: true, view: window });
+                    anchor.dispatchEvent(mouseEvent); 
+                    
+                    // Cleanup [9]
+                    document.body.removeChild(anchor);
+                    URL.revokeObjectURL(fileURL);
+                })
+             .catch(error => {
+                    console.error("Download failed:", error);
+                    alert("Download failed. Check console for details and ensure API access is configured.");
+                });
+        }
+        
+        
+        /**
+         * Triggers the complex video-to-audio conversion via the Serverless API.
+         * Provides visual feedback during the latency-prone transcoding process.[3]
+         */
+        async function requestAudioConversion(buttonElement, mediaId, outputFilename) {
+            if (!auth.currentUser) return alert("You must be logged in to convert and download.");
+
+            const originalText = buttonElement.textContent;
+            buttonElement.textContent = "Awaiting Conversion...";
+            buttonElement.disabled = true;
+            
+            try {
+                const idToken = await auth.currentUser.getIdToken();
+                
+                // POST request to trigger the Serverless FFmpeg/Managed API [4, 6]
+                const response = await fetch(TRANSCODE_API_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${idToken}` // Securely transmit token [1]
+                    },
+                    body: JSON.stringify({ mediaId: mediaId, format: 'mp3' })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Serverless conversion failed.');
+                }
+                
+                // Expects the API to return a time-limited download URL [4]
+                const data = await response.json(); 
+                const secureDownloadUrl = data.tempDownloadUrl |
+
+| 'https://mock-temp-cdn.com/converted-audio.mp3';
+
+                alert(`Conversion complete! Initiating download for ${outputFilename}.`);
+                
+                // Initiate the final download 
+                window.open(secureDownloadUrl, '_blank'); 
+
+            } catch (error) {
+                console.error("Audio Conversion Error:", error);
+                alert(`Conversion failed. Please ensure the backend serverless function is running and configured correctly.`);
+            } finally {
+                // Reset button state regardless of success or failure
+                buttonElement.textContent = originalText;
+                buttonElement.disabled = false;
+            }
+        }
+
+
+        // --- INITIALIZATION ON PAGE LOAD ---
+        document.addEventListener('DOMContentLoaded', initFirebase);
+
+    </script>
+</body>
+</html>
